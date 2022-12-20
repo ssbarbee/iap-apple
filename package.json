@@ -1,0 +1,68 @@
+{
+  "name": "iap-apple",
+  "version": "0.0.0",
+  "description": "Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "rm -rf lib && tsc",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "echo \"Error: no test specified\"",
+    "prepare": "yarn build",
+    "prepublishOnly": "yarn test && yarn lint",
+    "preversion": "yarn lint",
+    "version": "yarn format && git add -A src",
+    "postversion": "git push && git push --tags",
+    "lint": "eslint 'src/**/**.ts'",
+    "lint:fix": "eslint --fix 'src/**/**.ts'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssbarbee/iap-apple.git"
+  },
+  "keywords": [
+    "Apple",
+    "iOS",
+    "Purchase",
+    "Subscription",
+    "in-app-purchase",
+    "in-app-billing",
+    "Validation",
+    "IAP"
+  ],
+  "author": "ssbarbee",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ssbarbee/iap-apple/issues"
+  },
+  "homepage": "https://github.com/ssbarbee/iap-apple#readme",
+  "devDependencies": {
+    "@types/chai": "4.3.1",
+    "@types/fs-extra": "9.0.13",
+    "@types/node": "16.18.10",
+    "@types/superagent": "4.1.16",
+    "@typescript-eslint/eslint-plugin": "5.31.0",
+    "@typescript-eslint/parser": "5.31.0",
+    "@types/mocha": "9.1.1",
+    "eslint": "8.20.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-sort-export-all": "1.2.2",
+    "eslint-plugin-unused-imports": "2.0.0",
+    "fs-extra": "11.1.0",
+    "mocha": "10.0.0",
+    "prettier": "2.7.1",
+    "typescript": "4.8.4"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "dependencies": {
+    "superagent": "8.0.6"
+  },
+  "engines": {
+    "node": ">=16.15.0",
+    "yarn": ">= 1.22.17",
+    "npm": "please-use-yarn"
+  }
+}
