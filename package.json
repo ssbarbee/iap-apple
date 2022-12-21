@@ -75,7 +75,7 @@
     "typescript": "4.8.4"
   },
   "files": [
-    "dist/**/*"
+    "dist"
   ],
   "dependencies": {
     "superagent": "8.0.6"
@@ -157,7 +157,8 @@
           "assets": [
             "package.json",
             "README.md",
-            "CHANGELOG.md"
+            "CHANGELOG.md",
+            "dist/**/*.{js}"
           ],
           "message": "chore: Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
