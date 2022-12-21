@@ -13,6 +13,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+          token: ${{ secrets.GH_PUBLISHING_TOKEN }}
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
