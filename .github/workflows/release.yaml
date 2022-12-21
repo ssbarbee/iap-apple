@@ -1,4 +1,4 @@
-name: Push main
+name: Release
 on:
   push:
     branches:
@@ -29,4 +29,5 @@ jobs:
       - name: Release to NPM
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PUBLISHING_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: yarn release
