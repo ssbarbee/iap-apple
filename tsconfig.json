@@ -2,9 +2,14 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "strict": true,
     "declaration": true,
-    "outDir": "./lib",
-    "strict": true
+    "rootDir": "src",
+    "outDir": "lib",
   },
   "include": ["src"],
   "exclude": ["node_modules"]

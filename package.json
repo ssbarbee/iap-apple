@@ -6,7 +6,8 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "prebuild": "yarn code-quality:check",
-    "build": "rm -rf lib && tsc",
+    "build": "rm -rf lib && tsc --project tsconfig.build.json",
+    "postbuild": "cp package.json lib/package.json",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "nyc --reporter=json-summary mocha --bail --slow 1 --timeout 60000 --require ts-node/register/transpile-only src/**/*.spec.ts",
     "prepare": "is-ci || husky install",
@@ -147,7 +148,11 @@
           }
         }
       ],
-      "@semantic-release/npm",
+      [
+        "@semantic-release/npm", {
+          "pkgRoot": "lib"
+        }
+      ],
       "@semantic-release/release-notes-generator",
       [
         "@semantic-release/git",
