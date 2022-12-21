@@ -147,11 +147,7 @@
           }
         }
       ],
-      [
-        "@semantic-release/npm", {
-          "pkgRoot": "lib"
-        }
-      ],
+      "@semantic-release/npm",
       "@semantic-release/release-notes-generator",
       [
         "@semantic-release/git",
