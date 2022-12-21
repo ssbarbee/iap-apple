@@ -5,16 +5,26 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "prebuild": "yarn code-quality:check",
     "build": "rm -rf lib && tsc",
     "format": "prettier --write \"src/**/*.ts\"",
-    "test": "echo \"Error: no test specified\"",
-    "prepare": "yarn build",
+    "test": "nyc --reporter=html mocha --bail --slow 1 --timeout 60000 --require ts-node/register/transpile-only src/**/*.spec.ts",
+    "prepare": "is-ci || husky install",
     "prepublishOnly": "yarn test && yarn lint",
     "preversion": "yarn lint",
     "version": "yarn format && git add -A src",
     "postversion": "git push && git push --tags",
-    "lint": "eslint 'src/**/**.ts'",
-    "lint:fix": "eslint --fix 'src/**/**.ts'"
+    "lint": "eslint",
+    "ts:check": "yarn ts:check-types && yarn ts:circular-check",
+    "ts:check-types": "tsc --noEmit",
+    "ts:circular-check": "dpdm --no-output --no-tree --no-warning --exit-code circular:1 -T ./src/index.ts",
+    "lint:check": "eslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint --fix 'src/**/*.{ts,tsx}'",
+    "prettier:check": "prettier --check 'src/**/*.{ts,tsx}'",
+    "prettier:fix": "prettier --write 'src/**/*.{ts,tsx}'",
+    "release": "semantic-release",
+    "code-quality:check": "concurrently 'yarn ts:check' 'yarn prettier:check' 'yarn lint:check --quiet'",
+    "generate:coverage-badges": "istanbul-badges-readme --silent"
   },
   "repository": {
     "type": "git",
@@ -37,21 +47,35 @@
   },
   "homepage": "https://github.com/ssbarbee/iap-apple#readme",
   "devDependencies": {
+    "@commitlint/cli": "17.0.3",
+    "@commitlint/config-conventional": "17.0.3",
+    "@semantic-release/git": "10.0.1",
+    "@semantic-release/npm": "9.0.1",
     "@types/chai": "4.3.1",
     "@types/fs-extra": "9.0.13",
+    "@types/mocha": "9.1.1",
     "@types/node": "16.18.10",
     "@types/superagent": "4.1.16",
     "@typescript-eslint/eslint-plugin": "5.31.0",
     "@typescript-eslint/parser": "5.31.0",
-    "@types/mocha": "9.1.1",
+    "chai": "4.3.7",
+    "concurrently": "7.6.0",
+    "dpdm": "3.10.0",
     "eslint": "8.20.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-sort-export-all": "1.2.2",
     "eslint-plugin-unused-imports": "2.0.0",
     "fs-extra": "11.1.0",
+    "husky": "8.0.2",
+    "is-ci": "3.0.1",
+    "istanbul-badges-readme": "1.8.4",
     "mocha": "10.0.0",
+    "nyc": "15.1.0",
     "prettier": "2.7.1",
+    "semantic-release": "19.0.5",
+    "semantic-release-cli": "5.4.4",
+    "ts-node": "10.9.1",
     "typescript": "4.8.4"
   },
   "files": [
@@ -64,5 +88,87 @@
     "node": ">=16.15.0",
     "yarn": ">= 1.22.17",
     "npm": "please-use-yarn"
+  },
+  "release": {
+    "branches": [
+      "main"
+    ],
+    "plugins": [
+      [
+        "@semantic-release/commit-analyzer",
+        {
+          "preset": "angular",
+          "releaseRules": [
+            {
+              "type": "build",
+              "release": "patch"
+            },
+            {
+              "type": "chore",
+              "release": "patch"
+            },
+            {
+              "type": "ci",
+              "release": "patch"
+            },
+            {
+              "type": "docs",
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "fix",
+              "release": "patch"
+            },
+            {
+              "type": "perf",
+              "release": "patch"
+            },
+            {
+              "type": "refactor",
+              "release": "patch"
+            },
+            {
+              "type": "revert",
+              "release": "patch"
+            },
+            {
+              "type": "style",
+              "release": "patch"
+            },
+            {
+              "type": "test",
+              "release": "patch"
+            }
+          ],
+          "parserOpts": {
+            "noteKeywords": [
+              "BREAKING CHANGE",
+              "BREAKING CHANGES"
+            ]
+          }
+        }
+      ],
+      [
+        "@semantic-release/npm",
+        {
+          "npmPublish": false
+        }
+      ],
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/git",
+        {
+          "assets": [
+            "package.json",
+            "README.md"
+          ],
+          "message": "chore: Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        }
+      ]
+    ]
   }
 }

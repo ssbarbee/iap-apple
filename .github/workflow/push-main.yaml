@@ -1,0 +1,32 @@
+name: Push main
+on:
+  push:
+    branches:
+      - main
+jobs:
+  release:
+    name: Release lib
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.15.0'
+          cache: 'yarn'
+      - name: Install dependencies
+        run: yarn --frozen-lockfile --prefer-offline
+      - name: Prettier check, Eslint check, Typescript check
+        run: yarn code-quality:check
+      - name: Run tests
+        run: yarn test
+      - name: Generate coverage badges
+        run: yarn generate:coverage-badges
+      - name: Release to NPM
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PUBLISHING_TOKEN }}
+        run: yarn release
