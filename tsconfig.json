@@ -9,7 +9,7 @@
     "strict": true,
     "declaration": true,
     "rootDir": "src",
-    "outDir": "lib",
+    "outDir": "./dist",
   },
   "include": ["src"],
   "exclude": ["node_modules"]
