@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/ssbarbee/iap-apple/compare/v1.3.2...v1.3.3) (2022-12-22)
+
+
+### Bug Fixes
+
+* add dist to files ([2fc6c67](https://github.com/ssbarbee/iap-apple/commit/2fc6c671160bbf1d7c51fa87fa1baae6590d7898))
+
 ## [1.3.2](https://github.com/ssbarbee/iap-apple/compare/v1.3.1...v1.3.2) (2022-12-21)
 
 
