@@ -26,6 +26,8 @@ jobs:
         run: yarn test
       - name: Generate coverage badges
         run: yarn generate:coverage-badges
+      - name: Prepare build
+        run: yarn build
       - name: Release to NPM
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PUBLISHING_TOKEN }}
