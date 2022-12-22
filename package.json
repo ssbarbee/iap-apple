@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp package.json dist/package.json",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp package.json dist/package.json && cp README.md dist/README.md && cp CHANGELOG.md dist/CHANGELOG.md && cp LICENSE dist/LICENSE",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "nyc --reporter=json-summary mocha --bail --slow 1 --timeout 60000 --require ts-node/register/transpile-only src/**/*.spec.ts",
     "prepare": "is-ci || husky install",
@@ -145,7 +145,7 @@
         }
       ],
       [
-        "@semantic-release/npm", { "pkgRoot": "./dist" }],
+      "@semantic-release/npm", { "pkgRoot": "./dist" }],
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       [
