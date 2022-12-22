@@ -4,3 +4,15 @@
 
 # iap-apple
 Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.
+
+A NodeJS module for in-app purchase (in-app billing) and subscription for Apple.
+
+# Installation
+
+## npm
+
+```npm install iap-apple```
+
+## yarn
+
+```yarn add iap-apple```
