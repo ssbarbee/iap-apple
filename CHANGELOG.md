@@ -1,3 +1,11 @@
+## [1.3.5](https://github.com/ssbarbee/iap-apple/compare/v1.3.4...v1.3.5) (2022-12-22)
+
+
+### Bug Fixes
+
+* add build step in workflow ([8866e0e](https://github.com/ssbarbee/iap-apple/commit/8866e0ecd7a90bf842e23f7dbfd122cbda4aa5e0))
+* add pkgRoot ([d1abae3](https://github.com/ssbarbee/iap-apple/commit/d1abae37acb810fd9d115e6dde303617eae0becb))
+
 ## [1.3.4](https://github.com/ssbarbee/iap-apple/compare/v1.3.3...v1.3.4) (2022-12-22)
 
 
