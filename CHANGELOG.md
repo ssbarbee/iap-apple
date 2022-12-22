@@ -1,3 +1,11 @@
+## [1.3.6](https://github.com/ssbarbee/iap-apple/compare/v1.3.5...v1.3.6) (2022-12-22)
+
+
+### Bug Fixes
+
+* export type ([c39b2b1](https://github.com/ssbarbee/iap-apple/commit/c39b2b158ccf232e5280b0d7d7a1847a34fb8e38))
+* prettier ([21dedc6](https://github.com/ssbarbee/iap-apple/commit/21dedc6dbbc15ad0d7236ef3f1cd8f0e4f4b56b4))
+
 ## [1.3.5](https://github.com/ssbarbee/iap-apple/compare/v1.3.4...v1.3.5) (2022-12-22)
 
 
