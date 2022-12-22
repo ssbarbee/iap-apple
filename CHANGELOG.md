@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/ssbarbee/iap-apple/compare/v1.3.3...v1.3.4) (2022-12-22)
+
+
+### Bug Fixes
+
+* remove files ([fad1f77](https://github.com/ssbarbee/iap-apple/commit/fad1f777b3db4c2f2609dba33b65bb9c7a8c6bc8))
+
 ## [1.3.3](https://github.com/ssbarbee/iap-apple/compare/v1.3.2...v1.3.3) (2022-12-22)
 
 
