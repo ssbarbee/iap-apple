@@ -1,3 +1,10 @@
+## [1.3.7](https://github.com/ssbarbee/iap-apple/compare/v1.3.6...v1.3.7) (2022-12-22)
+
+
+### Bug Fixes
+
+* add README, CHANGELOG and LICENCE to dist ([deb9be6](https://github.com/ssbarbee/iap-apple/commit/deb9be6090ffba51599ea5424f9fd84ce967a87a))
+
 ## [1.3.6](https://github.com/ssbarbee/iap-apple/compare/v1.3.5...v1.3.6) (2022-12-22)
 
 
