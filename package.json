@@ -75,7 +75,9 @@
     "typescript": "4.8.4"
   },
   "files": [
-    "dist"
+    "src/**/*",
+    "dist/**/*",
+    "README.md"
   ],
   "dependencies": {
     "superagent": "8.0.6"
