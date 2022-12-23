@@ -1,6 +1,6 @@
 {
   "name": "iap-apple",
-  "version": "1.3.4",
+  "version": "2.0.0",
   "description": "Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
