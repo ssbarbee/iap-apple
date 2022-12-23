@@ -1,33 +1,40 @@
-import { IIAPAppleConfig, IReceiptValidationResponseBody, PurchasedItem } from '../../types';
-import { getPurchaseItem, validateReceipt } from '../internal';
+import { IIAPAppleConfig, IVerifyReceiptResponseBody, PurchasedItem } from '../../types';
+import { getPurchaseItem, verifyReceipt } from '../internal';
 import { PROD_PATH, RECEIPT_STATUS_ENUM, SANDBOX_PATH, STATUS_TO_MESSAGE_MAP } from '../../constants';
 
-export async function validate(receipt: string, config: IIAPAppleConfig): Promise<IReceiptValidationResponseBody> {
-  const logger = config.logger;
+/**
+ * It takes a receipt data and a config object, and returns a promise that resolves to a validated receipt object or
+ * rejects with an error
+ * @param {string} receipt - The receipt data.
+ * @param {IIAPAppleConfig} config - IIAPAppleConfig
+ * @returns a promise.
+ */
+export async function verify(receipt: string, config: IIAPAppleConfig): Promise<IVerifyReceiptResponseBody> {
+  const { appleExcludeOldTransactions, logger, test, appSharedSecret } = config;
 
   return new Promise(async (resolve, reject) => {
-    let validatedData: IReceiptValidationResponseBody | null = null;
+    let verifyReceiptResponse: IVerifyReceiptResponseBody | null = null;
     try {
-      if (!config.test) {
-        validatedData = await validateReceipt({
+      if (!test) {
+        verifyReceiptResponse = await verifyReceipt({
           logger: logger,
           validationEndpoint: PROD_PATH,
-          receipt,
-          password: config.applePassword,
-          excludeOldTransactions: Boolean(config.appleExcludeOldTransactions),
+          receiptData: receipt,
+          appSharedSecret,
+          excludeOldTransactions: Boolean(appleExcludeOldTransactions),
         });
       }
 
-      if (!validatedData) {
-        validatedData = await validateReceipt({
+      if (!verifyReceiptResponse) {
+        verifyReceiptResponse = await verifyReceipt({
           logger: logger,
           validationEndpoint: SANDBOX_PATH,
-          receipt,
-          password: config.applePassword,
-          excludeOldTransactions: Boolean(config.appleExcludeOldTransactions),
+          receiptData: receipt,
+          appSharedSecret,
+          excludeOldTransactions: Boolean(appleExcludeOldTransactions),
         });
       }
-      if (!validatedData) {
+      if (!verifyReceiptResponse) {
         reject({
           rejectionMessage: 'Unable to validate receipt using appstore endpoints.',
           data: null,
@@ -39,8 +46,8 @@ export async function validate(receipt: string, config: IIAPAppleConfig): Promis
       return;
     }
 
-    if (validatedData.status === RECEIPT_STATUS_ENUM.SUCCESS) {
-      if (validatedData.receipt?.in_app && validatedData.receipt?.in_app?.length === 0) {
+    if (verifyReceiptResponse.status === RECEIPT_STATUS_ENUM.SUCCESS) {
+      if (verifyReceiptResponse.receipt?.in_app && verifyReceiptResponse.receipt?.in_app?.length === 0) {
         /*
           Detected valid receipt,
           but the receipt bought nothing
@@ -49,34 +56,46 @@ export async function validate(receipt: string, config: IIAPAppleConfig): Promis
         */
         reject({
           rejectionMessage: 'Detected valid receipt, however purchase list is empty',
-          data: validatedData,
+          data: verifyReceiptResponse,
         });
       }
       // validated successfully
-      resolve(validatedData);
+      resolve(verifyReceiptResponse);
       return;
     }
 
     // failed to validate reject with apple message
     reject({
-      rejectionMessage: STATUS_TO_MESSAGE_MAP[validatedData.status],
-      data: validatedData,
+      rejectionMessage: STATUS_TO_MESSAGE_MAP[verifyReceiptResponse.status],
+      data: verifyReceiptResponse,
     });
   });
 }
 
-export const isValidated = function (response: IReceiptValidationResponseBody): boolean {
-  return response && response.status === RECEIPT_STATUS_ENUM.SUCCESS;
+/**
+ * It checks if the receipt is valid.
+ * @param {IVerifyReceiptResponseBody | null} verifyReceiptResponse - IVerifyReceiptResponseBody | null
+ * @returns A boolean
+ */
+export const isVerifiedReceipt = function (verifyReceiptResponse: IVerifyReceiptResponseBody | null): boolean {
+  return verifyReceiptResponse?.status === RECEIPT_STATUS_ENUM.SUCCESS;
 };
 
-export const isExpired = function (purchasedItem: PurchasedItem): boolean {
-  if (!purchasedItem || !purchasedItem.transactionId) {
+/**
+ * If the purchased item has been cancelled or if the expiration date has passed, then it has expired
+ * @param {PurchasedItem | null} purchasedItem - PurchasedItem | null
+ * @returns A boolean
+ */
+export const isPurchasedItemExpired = function (purchasedItem: PurchasedItem | null): boolean {
+  if (!purchasedItem?.transactionId) {
     throw new Error('Detected invalid purchased item! Make sure object is defined and it has transaction id.');
   }
+
   // it has been cancelled
   if (purchasedItem.cancellationDateMS) {
     return true;
   }
+
   // there is no expiration date with this item
   if (!purchasedItem.expirationDateMS) {
     return false;
@@ -89,21 +108,33 @@ export const isExpired = function (purchasedItem: PurchasedItem): boolean {
   return false;
 };
 
-export const isCanceled = function (purchasedItem: PurchasedItem): boolean {
-  if (!purchasedItem || !purchasedItem.transactionId) {
+/**
+ * If the purchased item has a cancellation date, then it's canceled.
+ * @param {PurchasedItem} purchasedItem - PurchasedItem - this is the purchased item object that you get from the
+ * getPurchasedItems() method.
+ * @returns A boolean value.
+ */
+export const isPurchasedItemCanceled = function (purchasedItem: PurchasedItem): boolean {
+  if (!purchasedItem?.transactionId) {
     throw new Error('Detected invalid purchased item! Make sure object is defined and it has transaction id.');
   }
   return Boolean(purchasedItem.cancellationDateMS);
 };
 
-export const getPurchaseData = function (purchase?: IReceiptValidationResponseBody): PurchasedItem[] {
-  if (!purchase || !purchase.receipt) {
+/**
+ * It takes a response from the Apple App Store and returns an array of PurchasedItem objects sorted by their purchase date in descending order,
+ * the latest purchase comes first.
+ * @param {IVerifyReceiptResponseBody | null} verifyReceiptResponse - IVerifyReceiptResponseBody | null
+ * @returns An array of PurchasedItem objects.
+ */
+export const getPurchasedItems = function (verifyReceiptResponse: IVerifyReceiptResponseBody | null): PurchasedItem[] {
+  if (!verifyReceiptResponse?.receipt) {
     return [];
   }
 
   const data: PurchasedItem[] = [];
-  let purchases = purchase.receipt.in_app || [];
-  const lri = purchase.latest_receipt_info || purchase.receipt.latest_receipt_info;
+  let purchases = verifyReceiptResponse.receipt.in_app || [];
+  const lri = verifyReceiptResponse.latest_receipt_info || verifyReceiptResponse.receipt.latest_receipt_info;
   if (Array.isArray(lri)) {
     purchases = purchases.concat(lri);
   }
@@ -125,7 +156,7 @@ export const getPurchaseData = function (purchase?: IReceiptValidationResponseBo
       continue;
     }
 
-    data.push(getPurchaseItem(item, purchase));
+    data.push(getPurchaseItem(item, verifyReceiptResponse));
     transactionIds[tid] = true;
   }
   return data;

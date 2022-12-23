@@ -1,12 +1,12 @@
-import { IAPAppleError, ILogger, IReceiptInAppItem, IReceiptValidationResponseBody } from '../../types';
+import { IAPAppleError, ILogger, IReceiptInAppItem, IVerifyReceiptResponseBody, PurchasedItem } from '../../types';
 import { RECEIPT_STATUS_ENUM, STATUS_TO_MESSAGE_MAP } from '../../constants';
 import * as request from 'superagent';
 
 function prefixMessage(message: string) {
-    return `[iap-apple] ${message}`;
+  return `[iap-apple] ${message}`;
 }
 
-export function isExpiredAppleResponse(responseData: IReceiptValidationResponseBody) {
+export function isExpiredReceipt(responseData: IVerifyReceiptResponseBody) {
   const date = Math.max(
     ...(responseData.latest_receipt_info || [])
       .filter((lri) => lri.expires_date_ms)
@@ -19,14 +19,14 @@ export function isExpiredAppleResponse(responseData: IReceiptValidationResponseB
   return false;
 }
 
-async function sendRequest(
+async function verifyReceiptApple(
   url: string,
   content: {
     'receipt-data': string;
     password: string | undefined;
     'exclude-old-transactions': boolean;
   },
-): Promise<IReceiptValidationResponseBody> {
+): Promise<IVerifyReceiptResponseBody> {
   return new Promise((resolve, reject) => {
     try {
       request
@@ -46,7 +46,7 @@ async function sendRequest(
   });
 }
 
-export function getPurchaseItem(item: IReceiptInAppItem, purchase: IReceiptValidationResponseBody) {
+export function getPurchaseItem(item: IReceiptInAppItem, purchase: IVerifyReceiptResponseBody): PurchasedItem {
   return {
     quantity: parseInt(item.quantity, 10),
     productId: item.product_id,
@@ -54,7 +54,7 @@ export function getPurchaseItem(item: IReceiptInAppItem, purchase: IReceiptValid
     originalTransactionId: item.original_transaction_id,
     bundleId: purchase.receipt.bundle_id,
     appItemId: item.app_item_id,
-    originalPurchaseDate: parseInt(item.original_purchase_date_ms, 10),
+    originalPurchaseDateMS: parseInt(item.original_purchase_date_ms, 10),
     purchaseDateMS: parseInt(item.purchase_date_ms, 10),
     cancellationDateMS: item.cancellation_date_ms ? parseInt(item.cancellation_date_ms, 10) : undefined,
     isTrialPeriod: item.is_trial_period === 'true',
@@ -62,23 +62,23 @@ export function getPurchaseItem(item: IReceiptInAppItem, purchase: IReceiptValid
   };
 }
 
-export const validateReceipt = async function ({
+export const verifyReceipt = async function ({
   logger,
   validationEndpoint,
-  receipt,
-  password,
+  receiptData,
+  appSharedSecret,
   excludeOldTransactions,
 }: {
   logger?: ILogger | null;
   validationEndpoint: string;
-  receipt: string;
-  password: string | undefined;
+  receiptData: string;
+  appSharedSecret: string;
   excludeOldTransactions: boolean;
-}): Promise<IReceiptValidationResponseBody | null> {
+}): Promise<IVerifyReceiptResponseBody | null> {
   return new Promise(async (resolve, reject) => {
     const content = {
-      'receipt-data': receipt,
-      password,
+      'receipt-data': receiptData,
+      password: appSharedSecret,
       'exclude-old-transactions': excludeOldTransactions,
     };
 
@@ -86,7 +86,7 @@ export const validateReceipt = async function ({
     logger?.log(prefixMessage(`Validation data: ${JSON.stringify(content, null, 2)}`));
 
     try {
-      const data = await sendRequest(validationEndpoint, content);
+      const data = await verifyReceiptApple(validationEndpoint, content);
       logger?.log(prefixMessage(`Endpoint ${validationEndpoint} response: ${JSON.stringify(data, null, 2)}`));
       // apple responded with error
       if (
@@ -94,7 +94,7 @@ export const validateReceipt = async function ({
         data.status !== RECEIPT_STATUS_ENUM.TEST_ENV_RECEIPT_DETECTED &&
         data.status !== RECEIPT_STATUS_ENUM.DATA_MALFORMED
       ) {
-        if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isExpiredAppleResponse(data)) {
+        if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isExpiredReceipt(data)) {
           /*
             detected valid subscription receipt,
             however it was cancelled, and it has not been expired
