@@ -2,6 +2,10 @@ import { IAPAppleError, ILogger, IReceiptInAppItem, IReceiptValidationResponseBo
 import { RECEIPT_STATUS_ENUM, STATUS_TO_MESSAGE_MAP } from '../../constants';
 import * as request from 'superagent';
 
+function prefixMessage(message: string) {
+    return `[iap-apple] ${message}`;
+}
+
 export function isExpiredAppleResponse(responseData: IReceiptValidationResponseBody) {
   const date = Math.max(
     ...(responseData.latest_receipt_info || [])
@@ -78,12 +82,12 @@ export const validateReceipt = async function ({
       'exclude-old-transactions': excludeOldTransactions,
     };
 
-    logger?.log(`[iap-apple] Validating against: ${validationEndpoint} endpoint`);
-    logger?.log(`[iap-apple] Validation data: ${JSON.stringify(content, null, 2)}`);
+    logger?.log(prefixMessage(`Validating against: ${validationEndpoint} endpoint`));
+    logger?.log(prefixMessage(`Validation data: ${JSON.stringify(content, null, 2)}`));
 
     try {
       const data = await sendRequest(validationEndpoint, content);
-      logger?.log(`[iap-apple] Endpoint ${validationEndpoint} response: ${JSON.stringify(data, null, 2)}`);
+      logger?.log(prefixMessage(`Endpoint ${validationEndpoint} response: ${JSON.stringify(data, null, 2)}`));
       // apple responded with error
       if (
         data.status !== RECEIPT_STATUS_ENUM.SUCCESS &&
@@ -92,11 +96,11 @@ export const validateReceipt = async function ({
       ) {
         if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isExpiredAppleResponse(data)) {
           /*
-                        detected valid subscription receipt,
-                        however it was cancelled, and it has not been expired
-                        status code is 21006 for both expired receipt and cancelled receipt...
-                    */
-          logger?.log('[iap-apple] Valid receipt, but has been cancelled (not expired yet)');
+            detected valid subscription receipt,
+            however it was cancelled, and it has not been expired
+            status code is 21006 for both expired receipt and cancelled receipt...
+          */
+          logger?.log(prefixMessage('Valid receipt, but has been cancelled (not expired yet)'));
           // force status to be SUCCESS
           resolve({
             ...data,
@@ -104,7 +108,7 @@ export const validateReceipt = async function ({
           });
           return;
         }
-        logger?.error(`[iap-apple] Endpoint ${validationEndpoint} failed: ${JSON.stringify(data, null, 2)}`);
+        logger?.error(prefixMessage(`Endpoint ${validationEndpoint} failed: ${JSON.stringify(data, null, 2)}`));
         reject({
           rejectionMessage: STATUS_TO_MESSAGE_MAP[data.status] || 'Unknown',
           data,
@@ -124,10 +128,10 @@ export const validateReceipt = async function ({
         return;
       }
       // receipt validated
-      logger?.log(`[iap-apple] Validation successful: ${JSON.stringify(data, null, 2)}`);
+      logger?.log(prefixMessage(`Validation successful: ${JSON.stringify(data, null, 2)}`));
       resolve(data);
     } catch (error) {
-      logger?.error(`[iap-apple] Endpoint ${validationEndpoint} failed: ${error}`);
+      logger?.error(prefixMessage(`Endpoint ${validationEndpoint} failed: ${error}`));
       reject({
         rejectionMessage: (error as Error)?.message,
         data: null,

@@ -9,11 +9,12 @@ export interface ILogger {
 
 export interface IIAPAppleConfig {
   /*
-    if you want to exclude old transaction, set this to true. Default is false
+    To exclude old transaction, set this to true. Default is false
   */
-  appleExcludeOldTransactions?: boolean | undefined;
+  appleExcludeOldTransactions?: boolean;
   /*
-    this comes from iTunes Connect (You need this to validate subscriptions)
+    Your app's shared secret, which is a hexadecimal string. For more information about the shared secret.
+    https://help.apple.com/app-store-connect/#/devf341c0f01
   */
   applePassword?: string | undefined;
   /*
