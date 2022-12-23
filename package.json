@@ -17,7 +17,7 @@
     "prettier:check": "prettier --check 'src/**/*.{ts,tsx}'",
     "prettier:fix": "prettier --write 'src/**/*.{ts,tsx}'",
     "release": "semantic-release",
-    "postrelease": "cp dist/package.json package.json",
+    "postversion": "cp -r package.json ..",
     "code-quality:check": "concurrently 'yarn ts:check' 'yarn prettier:check' 'yarn lint:check --quiet'",
     "generate:coverage-badges": "istanbul-badges-readme --silent"
   },
