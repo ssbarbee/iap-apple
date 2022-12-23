@@ -9,20 +9,20 @@ export interface ILogger {
 
 export interface IIAPAppleConfig {
   /*
-        if you want to exclude old transaction, set this to true. Default is false
-     */
+    if you want to exclude old transaction, set this to true. Default is false
+  */
   appleExcludeOldTransactions?: boolean | undefined;
   /*
-        this comes from iTunes Connect (You need this to validate subscriptions)
-     */
+    this comes from iTunes Connect (You need this to validate subscriptions)
+  */
   applePassword?: string | undefined;
   /*
-        force Sandbox validation only
-     */
+    force Sandbox validation only
+  */
   test?: boolean | undefined;
   /*
-        Logger object used for debugging purposes
-     */
+    Logger object used for debugging purposes
+  */
   logger?: ILogger | null;
 }
 
@@ -51,38 +51,38 @@ export interface IAPAppleError {
 */
 export interface IReceiptValidationResponseBody {
   /*
-          Either 0 if the receipt is valid, or a status code if there is an error.
-          The status code reflects the status of the app receipt as a whole. See status for possible status codes and descriptions.
-       */
+    Either 0 if the receipt is valid, or a status code if there is an error.
+    The status code reflects the status of the app receipt as a whole. See status for possible status codes and descriptions.
+  */
   status: RECEIPT_STATUS_ENUM;
   /*
-          The environment for which the receipt was generated.
-          Possible values: Sandbox, Production
-       */
+    The environment for which the receipt was generated.
+    Possible values: Sandbox, Production
+  */
   environment: 'Sandbox' | 'Production';
   /*
-          A JSON representation of the receipt that was sent for verification.
-       */
+    A JSON representation of the receipt that was sent for verification.
+  */
   receipt: IReceipt;
   /*
-          The latest Base64 encoded app receipt. Only returned for receipts that contain auto-renewable subscriptions.
-       */
+    The latest Base64 encoded app receipt. Only returned for receipts that contain auto-renewable subscriptions.
+  */
   latest_receipt: string;
   /*
-          An array that contains all in-app purchase transactions. This excludes transactions for consumable products that have been marked as finished by your app. Only returned for receipts that contain auto-renewable subscriptions.
-       */
+    An array that contains all in-app purchase transactions. This excludes transactions for consumable products that have been marked as finished by your app. Only returned for receipts that contain auto-renewable subscriptions.
+  */
   latest_receipt_info: IReceiptInAppItem[];
   /*
-          An indicator that an error occurred during the request.
-          A value of 1 indicates a temporary issue; retry validation for this receipt at a later time.
-          A value of 0 indicates an unresolvable issue; do not retry validation for this receipt. Only applicable to status codes 21100-21199.
-       */
+    An indicator that an error occurred during the request.
+    A value of 1 indicates a temporary issue; retry validation for this receipt at a later time.
+    A value of 0 indicates an unresolvable issue; do not retry validation for this receipt. Only applicable to status codes 21100-21199.
+  */
   'is-retryable': boolean;
 }
 
 /*
-    https://developer.apple.com/documentation/appstorereceipts/responsebody/receipt
-    https://developer.apple.com/library/archive/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html#//apple_ref/doc/uid/TP40010573-CH106-SW1
+  https://developer.apple.com/documentation/appstorereceipts/responsebody/receipt
+  https://developer.apple.com/library/archive/releasenotes/General/ValidateAppStoreReceipt/Chapters/ReceiptFields.html#//apple_ref/doc/uid/TP40010573-CH106-SW1
  */
 interface IReceipt {
   /*
