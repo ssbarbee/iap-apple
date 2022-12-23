@@ -9,7 +9,7 @@ export function isExpiredAppleResponse(responseData: IReceiptValidationResponseB
       .map((lri) => parseInt(lri.expires_date_ms!, 10)),
   );
   if (date) {
-    return date > Date.now();
+    return date > Date.now().valueOf();
   }
   // old receipt
   return false;

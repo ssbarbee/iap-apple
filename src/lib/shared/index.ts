@@ -42,11 +42,11 @@ export async function validate(receipt: string, config: IIAPAppleConfig): Promis
     if (validatedData.status === RECEIPT_STATUS_ENUM.SUCCESS) {
       if (validatedData.receipt?.in_app && validatedData.receipt?.in_app?.length === 0) {
         /*
-                    Detected valid receipt,
-                    but the receipt bought nothing
-                    probably hacked: https://forums.developer.apple.com/thread/8954
-                    https://developer.apple.com/library/mac/technotes/tn2413/_index.html#//apple_ref/doc/uid/DTS40016228-CH1-RECEIPT-HOW_DO_I_USE_THE_CANCELLATION_DATE_FIELD_
-                */
+          Detected valid receipt,
+          but the receipt bought nothing
+          probably hacked: https://forums.developer.apple.com/thread/8954
+          https://developer.apple.com/library/mac/technotes/tn2413/_index.html#//apple_ref/doc/uid/DTS40016228-CH1-RECEIPT-HOW_DO_I_USE_THE_CANCELLATION_DATE_FIELD_
+        */
         reject({
           rejectionMessage: 'Detected valid receipt, however purchase list is empty',
           data: validatedData,
@@ -82,7 +82,7 @@ export const isExpired = function (purchasedItem: PurchasedItem): boolean {
     return false;
   }
   // has expired
-  if (Date.now() - purchasedItem.expirationDateMS >= 0) {
+  if (Date.now().valueOf() - purchasedItem.expirationDateMS >= 0) {
     return true;
   }
   // has not expired yet
@@ -108,10 +108,10 @@ export const getPurchaseData = function (purchase?: IReceiptValidationResponseBo
     purchases = purchases.concat(lri);
   }
   /*
-        we sort purchases by purchase_date_ms to make it easier
-        to weed out duplicates (items with the same original_transaction_id)
-        purchase_date_ms DESC
-    */
+    we sort purchases by purchase_date_ms to make it easier
+    to weed out duplicates (items with the same original_transaction_id)
+    purchase_date_ms DESC
+  */
   purchases.sort(function (a, b) {
     return parseInt(b.purchase_date_ms, 10) - parseInt(a.purchase_date_ms, 10);
   });
