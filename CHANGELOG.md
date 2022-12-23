@@ -1,3 +1,10 @@
+## [1.3.9](https://github.com/ssbarbee/iap-apple/compare/v1.3.8...v1.3.9) (2022-12-23)
+
+
+### Bug Fixes
+
+* use valueOf ([a68d4eb](https://github.com/ssbarbee/iap-apple/commit/a68d4eb4ad3392d2973b77c74fba3ac3a1594c81))
+
 ## [1.3.8](https://github.com/ssbarbee/iap-apple/compare/v1.3.7...v1.3.8) (2022-12-22)
 
 ## [1.3.7](https://github.com/ssbarbee/iap-apple/compare/v1.3.6...v1.3.7) (2022-12-22)
