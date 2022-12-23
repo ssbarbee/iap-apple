@@ -1,3 +1,5 @@
+## [1.3.10](https://github.com/ssbarbee/iap-apple/compare/v1.3.9...v1.3.10) (2022-12-23)
+
 ## [1.3.9](https://github.com/ssbarbee/iap-apple/compare/v1.3.8...v1.3.9) (2022-12-23)
 
 
