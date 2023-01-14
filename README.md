@@ -7,12 +7,12 @@
 
 A NodeJS module for in-app purchase (in-app billing) and subscription for Apple.
 
-## Overview
+## Overview 🧐
 
 Create a Typescript package for validation of [App Store Receipts](https://developer.apple.com/documentation/appstorereceipts).  
 This package is meant to be used server side to validate receipts from the App Store by talking to Apples servers.
 
-## Installation
+## Installation 📦
 
 ### npm
 
@@ -22,9 +22,9 @@ This package is meant to be used server side to validate receipts from the App S
 
 ```yarn add iap-apple```
 
-## API documentation
+## API documentation 📚
 
-### verify
+### verify 🧪
 
 API used to verify receipt data received during an App Store purchase.
 Requires **appSharedSecret** to be passed as part of the configuration.
@@ -70,7 +70,7 @@ async function verifyAppleReceipt(receipt: string) {
 }
 ```
 
-### isVerifiedReceipt
+### isVerifiedReceipt 🧪
 
 API used to verify if response returned by `verify` is verified.
 Requires the output of `verify` to be passed.
@@ -94,7 +94,7 @@ async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) 
 }
 ```
 
-### getPurchasedItems
+### getPurchasedItems 🧪
 
 API used to get an array of PurchasedItem objects from the Apple App Store response,
 sort by their purchase date descending.
@@ -121,7 +121,7 @@ async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) 
 }
 ```
 
-### isPurchasedItemCanceled
+### isPurchasedItemCanceled 🧪
 
 API used to check if a purchased item is canceled.
 Requires the output of `getPurchasedItems` to be passed.
@@ -148,7 +148,7 @@ async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) 
 ```
 
 
-### isPurchasedItemExpired
+### isPurchasedItemExpired 🧪
 
 API used to check if a purchased item is expired.
 Requires the output of `getPurchasedItems` to be passed.
