@@ -3,6 +3,11 @@
 | ![Statements](https://img.shields.io/badge/statements-76.97%25-red.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-47.96%25-red.svg?style=flat) | ![Functions](https://img.shields.io/badge/functions-75%25-red.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-75%25-red.svg?style=flat) |
 
 # iap-apple
+
+![https://img.shields.io/npm/v/iap-apple](https://img.shields.io/npm/v/iap-apple)
+![https://img.shields.io/github/issues-raw/ssbarbee/iap-apple](https://img.shields.io/github/issues-raw/ssbarbee/iap-apple)
+![https://img.shields.io/npm/dw/iap-apple](https://img.shields.io/npm/dw/iap-apple)
+
 📦🚀 Integration of Apples  **validation service** for App Store Receipts, written in Typescript, available for NodeJS environments.
 
 A NodeJS module for in-app purchase (in-app billing) and subscription for Apple.
