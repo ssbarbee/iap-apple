@@ -2,8 +2,8 @@
   "name": "iap-apple",
   "version": "2.0.4",
   "description": "Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc --project tsconfig.build.json && cp package.json dist/package.json && cp README.md dist/README.md && cp CHANGELOG.md dist/CHANGELOG.md && cp LICENSE dist/LICENSE",
     "format": "prettier --write \"src/**/*.ts\"",
