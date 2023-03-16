@@ -1,3 +1,10 @@
+## [2.0.5](https://github.com/ssbarbee/iap-apple/compare/v2.0.4...v2.0.5) (2023-03-16)
+
+
+### Bug Fixes
+
+* correct main/types ([92cf953](https://github.com/ssbarbee/iap-apple/commit/92cf9533b475abc82f03fe1747c6df34753613cd))
+
 ## [2.0.4](https://github.com/ssbarbee/iap-apple/compare/v2.0.3...v2.0.4) (2023-01-26)
 
 ## [2.0.3](https://github.com/ssbarbee/iap-apple/compare/v2.0.2...v2.0.3) (2023-01-14)
