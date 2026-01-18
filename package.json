@@ -1,7 +1,7 @@
 {
   "name": "iap-apple",
   "version": "3.0.1",
-  "description": "Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.",
+  "description": "Lightweight Apple App Store receipt validation for Node.js - Zero dependencies, TypeScript-first, production ready",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -41,14 +41,20 @@
     "url": "git+https://github.com/ssbarbee/iap-apple.git"
   },
   "keywords": [
-    "Apple",
-    "iOS",
-    "Purchase",
-    "Subscription",
+    "apple",
+    "app-store",
     "in-app-purchase",
-    "in-app-billing",
-    "Validation",
-    "IAP"
+    "iap",
+    "receipt",
+    "receipt-validation",
+    "verify-receipt",
+    "storekit",
+    "subscription",
+    "ios",
+    "macos",
+    "typescript",
+    "nodejs",
+    "zero-dependencies"
   ],
   "author": "ssbarbee",
   "license": "ISC",
