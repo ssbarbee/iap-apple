@@ -9,7 +9,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "nyc --reporter=json-summary mocha --bail --slow 1 --timeout 60000 --require ts-node/register/transpile-only src/**/*.spec.ts",
     "prepare": "is-ci || husky install",
-    "ts:check": "yarn ts:check-types && yarn ts:circular-check",
+    "ts:check": "pnpm ts:check-types && pnpm ts:circular-check",
     "ts:check-types": "tsc --noEmit",
     "ts:circular-check": "dpdm --no-output --no-tree --no-warning --exit-code circular:1 -T ./src/index.ts",
     "lint:check": "eslint 'src/**/*.{ts,tsx}'",
@@ -18,7 +18,7 @@
     "prettier:fix": "prettier --write 'src/**/*.{ts,tsx}'",
     "release": "semantic-release",
     "postversion": "cp -r package.json ..",
-    "code-quality:check": "concurrently 'yarn ts:check' 'yarn prettier:check' 'yarn lint:check --quiet'",
+    "code-quality:check": "concurrently 'pnpm ts:check' 'pnpm prettier:check' 'pnpm lint:check --quiet'",
     "generate:coverage-badges": "istanbul-badges-readme --silent"
   },
   "repository": {
@@ -78,9 +78,8 @@
     "superagent": "8.0.6"
   },
   "engines": {
-    "node": ">=16.15.0",
-    "yarn": ">= 1.22.17",
-    "npm": "please-use-yarn"
+    "node": ">=18.0.0",
+    "pnpm": ">= 9"
   },
   "release": {
     "branches": [
@@ -168,7 +167,8 @@
           ],
           "message": "chore: Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
-      ]
+      ],
+      "@semantic-release/github"
     ]
   }
 }
