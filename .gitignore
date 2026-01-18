@@ -1,4 +1,10 @@
 node_modules
+dist
 .idea
-/lib
-/dist
+
+# Coverage
+.nyc_output
+coverage
+
+# OS
+.DS_Store
