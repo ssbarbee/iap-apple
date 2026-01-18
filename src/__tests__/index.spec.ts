@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { readFileSync } from 'fs-extra';
 import nock from 'nock';
 import {
   getPurchasedItems,
@@ -10,9 +9,8 @@ import {
   RECEIPT_STATUS_ENUM,
   verify,
 } from '../index';
-import { join } from 'path';
 
-const receiptPath = join(__dirname, './receipts/apple');
+const TEST_RECEIPT = 'test-receipt-data';
 
 describe('iap-apple', function () {
   afterEach(() => {
@@ -144,7 +142,7 @@ describe('iap-apple', function () {
   });
 
   it('Can verify apple in-app-purchase (mocked)', async () => {
-    const receipt = readFileSync(receiptPath).toString();
+    const receipt = TEST_RECEIPT;
 
     // Mock successful response from sandbox (after production returns 21007)
     const mockResponse = {
@@ -477,7 +475,7 @@ describe('iap-apple', function () {
 
   describe('verify with test mode', function () {
     it('skips production endpoint when test: true', async function () {
-      const receipt = readFileSync(receiptPath).toString();
+      const receipt = TEST_RECEIPT;
 
       const mockResponse = {
         status: 0,
@@ -516,7 +514,7 @@ describe('iap-apple', function () {
 
   describe('verify with cancelled subscription (status 21006)', function () {
     it('treats cancelled but not expired subscription as valid', async function () {
-      const receipt = readFileSync(receiptPath).toString();
+      const receipt = TEST_RECEIPT;
       const futureDate = Date.now() + 86400000 * 30; // 30 days from now
 
       const mockResponse = {
@@ -564,7 +562,7 @@ describe('iap-apple', function () {
     });
 
     it('rejects truly expired subscription with status 21006', async function () {
-      const receipt = readFileSync(receiptPath).toString();
+      const receipt = TEST_RECEIPT;
       const pastDate = Date.now() - 86400000 * 30; // 30 days ago
 
       const mockResponse = {
@@ -682,7 +680,7 @@ describe('iap-apple', function () {
 
   describe('verify with production success', function () {
     it('returns response from production without calling sandbox', async function () {
-      const receipt = readFileSync(receiptPath).toString();
+      const receipt = TEST_RECEIPT;
 
       const mockResponse = {
         status: 0,
