@@ -1,7 +1,15 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs-extra';
 import nock from 'nock';
-import { getPurchasedItems, isVerifiedReceipt, verify } from '../index';
+import {
+  getPurchasedItems,
+  isPurchasedItemCanceled,
+  isPurchasedItemExpired,
+  isVerifiedReceipt,
+  PurchasedItem,
+  RECEIPT_STATUS_ENUM,
+  verify,
+} from '../index';
 import { join } from 'path';
 
 const receiptPath = join(__dirname, './receipts/apple');
@@ -333,5 +341,454 @@ describe('iap-apple', function () {
         throw new Error('missing purchase data');
       }
     }
+  });
+
+  describe('isVerifiedReceipt', function () {
+    it('returns true for successful status', function () {
+      const response = { status: RECEIPT_STATUS_ENUM.SUCCESS } as any;
+      expect(isVerifiedReceipt(response)).to.equal(true);
+    });
+
+    it('returns false for non-success status', function () {
+      const response = { status: RECEIPT_STATUS_ENUM.DATA_MALFORMED } as any;
+      expect(isVerifiedReceipt(response)).to.equal(false);
+    });
+
+    it('returns false for null input', function () {
+      expect(isVerifiedReceipt(null)).to.equal(false);
+    });
+
+    it('returns false for undefined status', function () {
+      const response = {} as any;
+      expect(isVerifiedReceipt(response)).to.equal(false);
+    });
+  });
+
+  describe('isPurchasedItemExpired', function () {
+    const createPurchasedItem = (overrides: Partial<PurchasedItem> = {}): PurchasedItem => ({
+      bundleId: 'com.example.app',
+      appItemId: '123456',
+      transactionId: 'txn_123',
+      originalTransactionId: 'txn_123',
+      productId: 'com.example.product',
+      purchaseDateMS: Date.now() - 86400000,
+      isTrialPeriod: false,
+      quantity: 1,
+      ...overrides,
+    });
+
+    it('throws error for null input', function () {
+      expect(() => isPurchasedItemExpired(null)).to.throw(
+        'Detected invalid purchased item! Make sure object is defined and it has transaction id.',
+      );
+    });
+
+    it('throws error for item without transactionId', function () {
+      const item = createPurchasedItem({ transactionId: '' });
+      expect(() => isPurchasedItemExpired(item)).to.throw(
+        'Detected invalid purchased item! Make sure object is defined and it has transaction id.',
+      );
+    });
+
+    it('returns true for cancelled item', function () {
+      const item = createPurchasedItem({ cancellationDateMS: Date.now() - 3600000 });
+      expect(isPurchasedItemExpired(item)).to.equal(true);
+    });
+
+    it('returns false for item without expiration date', function () {
+      const item = createPurchasedItem({ expirationDateMS: undefined });
+      expect(isPurchasedItemExpired(item)).to.equal(false);
+    });
+
+    it('returns true for expired item', function () {
+      const item = createPurchasedItem({ expirationDateMS: Date.now() - 86400000 });
+      expect(isPurchasedItemExpired(item)).to.equal(true);
+    });
+
+    it('returns false for non-expired item', function () {
+      const item = createPurchasedItem({ expirationDateMS: Date.now() + 86400000 });
+      expect(isPurchasedItemExpired(item)).to.equal(false);
+    });
+
+    it('returns true for item expiring exactly now', function () {
+      const item = createPurchasedItem({ expirationDateMS: Date.now() });
+      expect(isPurchasedItemExpired(item)).to.equal(true);
+    });
+  });
+
+  describe('isPurchasedItemCanceled', function () {
+    const createPurchasedItem = (overrides: Partial<PurchasedItem> = {}): PurchasedItem => ({
+      bundleId: 'com.example.app',
+      appItemId: '123456',
+      transactionId: 'txn_123',
+      originalTransactionId: 'txn_123',
+      productId: 'com.example.product',
+      purchaseDateMS: Date.now() - 86400000,
+      isTrialPeriod: false,
+      quantity: 1,
+      ...overrides,
+    });
+
+    it('throws error for null input', function () {
+      expect(() => isPurchasedItemCanceled(null as any)).to.throw(
+        'Detected invalid purchased item! Make sure object is defined and it has transaction id.',
+      );
+    });
+
+    it('throws error for item without transactionId', function () {
+      const item = createPurchasedItem({ transactionId: '' });
+      expect(() => isPurchasedItemCanceled(item)).to.throw(
+        'Detected invalid purchased item! Make sure object is defined and it has transaction id.',
+      );
+    });
+
+    it('returns true for cancelled item', function () {
+      const item = createPurchasedItem({ cancellationDateMS: Date.now() - 3600000 });
+      expect(isPurchasedItemCanceled(item)).to.equal(true);
+    });
+
+    it('returns false for non-cancelled item', function () {
+      const item = createPurchasedItem({ cancellationDateMS: undefined });
+      expect(isPurchasedItemCanceled(item)).to.equal(false);
+    });
+  });
+
+  describe('getPurchasedItems edge cases', function () {
+    it('returns empty array for null input', function () {
+      expect(getPurchasedItems(null)).to.deep.equal([]);
+    });
+
+    it('returns empty array for response without receipt', function () {
+      const response = { status: 0 } as any;
+      expect(getPurchasedItems(response)).to.deep.equal([]);
+    });
+
+    it('returns empty array for response with empty in_app and no latest_receipt_info', function () {
+      const response = {
+        status: 0,
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [],
+        },
+      } as any;
+      expect(getPurchasedItems(response)).to.deep.equal([]);
+    });
+  });
+
+  describe('verify with test mode', function () {
+    it('skips production endpoint when test: true', async function () {
+      const receipt = readFileSync(receiptPath).toString();
+
+      const mockResponse = {
+        status: 0,
+        environment: 'Sandbox',
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.subscription',
+              transaction_id: '1000000461788817',
+              original_transaction_id: '1000000461788817',
+              purchase_date: '2012-04-30 15:05:55 Etc/GMT',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date: '2012-04-30 15:05:55 Etc/GMT',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+            },
+          ],
+        },
+      };
+
+      // Only mock sandbox - production should NOT be called
+      const sandboxScope = nock('https://sandbox.itunes.apple.com').post('/verifyReceipt').reply(200, mockResponse);
+
+      const response = await verify(receipt, {
+        appSharedSecret: 'fake-shared-secret',
+        test: true,
+      });
+
+      expect(isVerifiedReceipt(response)).to.equal(true);
+      expect(sandboxScope.isDone()).to.equal(true);
+    });
+  });
+
+  describe('verify with cancelled subscription (status 21006)', function () {
+    it('treats cancelled but not expired subscription as valid', async function () {
+      const receipt = readFileSync(receiptPath).toString();
+      const futureDate = Date.now() + 86400000 * 30; // 30 days from now
+
+      const mockResponse = {
+        status: 21006,
+        environment: 'Production',
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.subscription',
+              transaction_id: '1000000461788817',
+              original_transaction_id: '1000000461788817',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+              expires_date_ms: String(futureDate),
+            },
+          ],
+        },
+        latest_receipt_info: [
+          {
+            quantity: '1',
+            product_id: 'com.example.subscription',
+            transaction_id: '1000000461788817',
+            original_transaction_id: '1000000461788817',
+            purchase_date_ms: '1335798355868',
+            original_purchase_date_ms: '1335798355868',
+            is_trial_period: 'false',
+            app_item_id: '521129812',
+            expires_date_ms: String(futureDate),
+          },
+        ],
+      };
+
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, mockResponse);
+
+      const response = await verify(receipt, {
+        appSharedSecret: 'fake-shared-secret',
+      });
+
+      // Should be treated as success because subscription is cancelled but not expired
+      expect(response.status).to.equal(RECEIPT_STATUS_ENUM.SUCCESS);
+    });
+
+    it('rejects truly expired subscription with status 21006', async function () {
+      const receipt = readFileSync(receiptPath).toString();
+      const pastDate = Date.now() - 86400000 * 30; // 30 days ago
+
+      const mockResponse = {
+        status: 21006,
+        environment: 'Production',
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [],
+        },
+        latest_receipt_info: [
+          {
+            quantity: '1',
+            product_id: 'com.example.subscription',
+            transaction_id: '1000000461788817',
+            original_transaction_id: '1000000461788817',
+            purchase_date_ms: '1335798355868',
+            original_purchase_date_ms: '1335798355868',
+            is_trial_period: 'false',
+            app_item_id: '521129812',
+            expires_date_ms: String(pastDate),
+          },
+        ],
+      };
+
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, mockResponse);
+
+      try {
+        await verify(receipt, {
+          appSharedSecret: 'fake-shared-secret',
+        });
+        expect.fail('Expected verification to throw');
+      } catch (error: any) {
+        expect(error.rejectionMessage).to.include('subscription has expired');
+      }
+    });
+  });
+
+  describe('verify error handling', function () {
+    it('rejects with proper error for status 21003 (receipt not authenticated)', async function () {
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, { status: 21003 });
+
+      try {
+        await verify('fake-receipt', {
+          appSharedSecret: 'fake-shared-secret',
+        });
+        expect.fail('Expected verification to throw');
+      } catch (error: any) {
+        expect(error.rejectionMessage).to.equal('The receipt could not be authenticated.');
+        expect(error.data.status).to.equal(21003);
+      }
+    });
+
+    it('rejects with proper error for status 21004 (shared secret mismatch)', async function () {
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, { status: 21004 });
+
+      try {
+        await verify('fake-receipt', {
+          appSharedSecret: 'wrong-secret',
+        });
+        expect.fail('Expected verification to throw');
+      } catch (error: any) {
+        expect(error.rejectionMessage).to.equal(
+          'The shared secret you provided does not match the shared secret on file for your account.',
+        );
+        expect(error.data.status).to.equal(21004);
+      }
+    });
+
+    it('rejects with proper error for status 21005 (server not available)', async function () {
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, { status: 21005 });
+
+      try {
+        await verify('fake-receipt', {
+          appSharedSecret: 'fake-shared-secret',
+        });
+        expect.fail('Expected verification to throw');
+      } catch (error: any) {
+        expect(error.rejectionMessage).to.equal('The receipt server is not currently available.');
+        expect(error.data.status).to.equal(21005);
+      }
+    });
+
+    it('falls back to sandbox when production returns 21008', async function () {
+      const mockResponse = {
+        status: 0,
+        environment: 'Sandbox',
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.product',
+              transaction_id: '123',
+              original_transaction_id: '123',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+            },
+          ],
+        },
+      };
+
+      // Production returns 21008 (production receipt sent to sandbox - but we test fallback behavior)
+      nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, { status: 21007 });
+      nock('https://sandbox.itunes.apple.com').post('/verifyReceipt').reply(200, mockResponse);
+
+      const response = await verify('some-receipt', {
+        appSharedSecret: 'fake-shared-secret',
+      });
+
+      expect(isVerifiedReceipt(response)).to.equal(true);
+    });
+  });
+
+  describe('verify with production success', function () {
+    it('returns response from production without calling sandbox', async function () {
+      const receipt = readFileSync(receiptPath).toString();
+
+      const mockResponse = {
+        status: 0,
+        environment: 'Production',
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.subscription',
+              transaction_id: '1000000461788817',
+              original_transaction_id: '1000000461788817',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+            },
+          ],
+        },
+      };
+
+      const prodScope = nock('https://buy.itunes.apple.com').post('/verifyReceipt').reply(200, mockResponse);
+
+      const response = await verify(receipt, {
+        appSharedSecret: 'fake-shared-secret',
+      });
+
+      expect(isVerifiedReceipt(response)).to.equal(true);
+      expect(response.environment).to.equal('Production');
+      expect(prodScope.isDone()).to.equal(true);
+    });
+  });
+
+  describe('getPurchasedItems parsing', function () {
+    it('correctly parses trial period', function () {
+      const response = {
+        status: 0,
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.product',
+              transaction_id: '123',
+              original_transaction_id: '123',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'true',
+              app_item_id: '521129812',
+            },
+          ],
+        },
+      } as any;
+
+      const items = getPurchasedItems(response);
+      expect(items[0].isTrialPeriod).to.equal(true);
+    });
+
+    it('correctly parses cancellation date', function () {
+      const response = {
+        status: 0,
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.product',
+              transaction_id: '123',
+              original_transaction_id: '123',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+              cancellation_date_ms: '1335798400000',
+            },
+          ],
+        },
+      } as any;
+
+      const items = getPurchasedItems(response);
+      expect(items[0].cancellationDateMS).to.equal(1335798400000);
+    });
+
+    it('correctly parses expiration date', function () {
+      const response = {
+        status: 0,
+        receipt: {
+          bundle_id: 'com.example.app',
+          in_app: [
+            {
+              quantity: '1',
+              product_id: 'com.example.product',
+              transaction_id: '123',
+              original_transaction_id: '123',
+              purchase_date_ms: '1335798355868',
+              original_purchase_date_ms: '1335798355868',
+              is_trial_period: 'false',
+              app_item_id: '521129812',
+              expires_date_ms: '1335798500000',
+            },
+          ],
+        },
+      } as any;
+
+      const items = getPurchasedItems(response);
+      expect(items[0].expirationDateMS).to.equal(1335798500000);
+    });
   });
 });
