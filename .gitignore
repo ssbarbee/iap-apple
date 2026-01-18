@@ -8,3 +8,6 @@ coverage
 
 # OS
 .DS_Store
+
+# AI
+CLAUDE.md
