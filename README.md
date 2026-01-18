@@ -11,7 +11,7 @@
 
 **Lightweight Apple App Store receipt validation for Node.js** - Zero dependencies, TypeScript-first, blazing fast.
 
-## Why iap-apple?
+## Why iap-apple? 🤔
 
 | Feature | iap-apple | Others |
 |---------|-----------|--------|
@@ -26,7 +26,7 @@
 - **Production Ready** - 93%+ test coverage, battle-tested
 - **Simple API** - One function to validate, intuitive helpers
 
-## Installation
+## Installation 📦
 
 ```bash
 # pnpm (recommended)
@@ -41,7 +41,7 @@ yarn add iap-apple
 
 **Requirements:** Node.js 22+
 
-## Quick Start
+## Quick Start 🚀
 
 ```typescript
 import { verify, getPurchasedItems, isPurchasedItemExpired } from 'iap-apple';
@@ -61,7 +61,7 @@ if (!isPurchasedItemExpired(latestPurchase)) {
 }
 ```
 
-## API Reference
+## API Reference 📚
 
 ### verify(receipt, config)
 
@@ -152,7 +152,7 @@ if (isPurchasedItemCanceled(items[0])) {
 }
 ```
 
-## Types
+## Types 📝
 
 ### PurchasedItem
 
@@ -203,7 +203,7 @@ Common status codes:
 - `21007` - Sandbox receipt sent to production
 - `21008` - Production receipt sent to sandbox
 
-## StoreKit 2 / App Store Server API
+## StoreKit 2 / App Store Server API 🆕
 
 This library uses Apple's legacy `verifyReceipt` endpoint, which still works but is deprecated for new apps.
 
@@ -224,10 +224,10 @@ npm install @apple/app-store-server-library
 - Need App Store Server Notifications V2
 - Need subscription offer signing
 
-## Contributing
+## Contributing 🤝
 
 Contributions are welcome! Please open an issue or submit a PR.
 
-## License
+## License 📄
 
 ISC
