@@ -8,173 +8,183 @@
 ![https://img.shields.io/github/issues-raw/ssbarbee/iap-apple](https://img.shields.io/github/issues-raw/ssbarbee/iap-apple)
 ![https://img.shields.io/npm/dw/iap-apple](https://img.shields.io/npm/dw/iap-apple)
 
-📦🚀 Integration of Apples  **validation service** for App Store Receipts, written in Typescript, available for NodeJS environments.
+Integration of Apple's **validation service** for App Store Receipts, written in TypeScript, available for Node.js environments.
 
-A NodeJS module for in-app purchase (in-app billing) and subscription for Apple.
+A Node.js module for in-app purchase (in-app billing) and subscription validation for Apple.
 
-## Overview 🧐
+## Requirements
 
-Create a Typescript package for validation of [App Store Receipts](https://developer.apple.com/documentation/appstorereceipts).  
-This package is meant to be used server side to validate receipts from the App Store by talking to Apples servers.
+- **Node.js 22+** (uses native `fetch`, zero runtime dependencies)
 
-## Installation 📦
+## Overview
+
+Server-side validation of [App Store Receipts](https://developer.apple.com/documentation/appstorereceipts) by communicating with Apple's verifyReceipt endpoints.
+
+## Installation
+
+### pnpm
+
+```bash
+pnpm add iap-apple
+```
 
 ### npm
 
-```npm install iap-apple```
+```bash
+npm install iap-apple
+```
 
 ### yarn
 
-```yarn add iap-apple```
+```bash
+yarn add iap-apple
+```
 
-## API documentation 📚
+## API Documentation
 
-### verify 🧪
+### verify
 
-API used to verify receipt data received during an App Store purchase.
-Requires **appSharedSecret** to be passed as part of the configuration.
-See example for more details.
+Validates a receipt against Apple's verifyReceipt endpoint. Attempts production first, falls back to sandbox if needed.
 
 ```typescript
-
 import { verify, IAPAppleError, IVerifyReceiptResponseBody } from 'iap-apple';
 
 async function verifyAppleReceipt(receipt: string) {
-    try {
-        const verifyReceiptResponse = await verify(receipt, { 
-            /*
-              Your app's shared secret, which is a hexadecimal string. For more information about the shared secret.
-              https://help.apple.com/app-store-connect/#/devf341c0f01
-            */
-            appSharedSecret, 
-            /*
-              To exclude old transaction, set this to true. 
-              Default is false.
-            */
-            excludeOldTransactions: false,
-            /*
-              Force validation against Apple Sandbox only.
-              In effect this means that the validation against Apple Production endpoint won't be used.
-              Default is false.
-            */
-            test: false,
-            /* 
-              Optional can be omitted, pass logger object if you want to debug.
-              Default is null object.
-            */
-            logger: console,
-        });
-        console.log('verifyReceiptResponse', verifyReceiptResponse);
-    } catch(error) {
-        const iapAppleError = error as IAPAppleError;
-        const rejectionMessage: string = error.rejectionMessage;
-        const errorData: IVerifyReceiptResponseBody | null = error.data;
-        console.error('Error happened', rejectionMessage);
-        console.error('Details', errorData);
-    }
+  try {
+    const verifyReceiptResponse = await verify(receipt, {
+      // Required: Your app's shared secret (hexadecimal string)
+      // https://help.apple.com/app-store-connect/#/devf341c0f01
+      appSharedSecret: 'your-shared-secret',
+
+      // Optional: Exclude old transactions (default: false)
+      appleExcludeOldTransactions: false,
+
+      // Optional: Force sandbox-only validation (default: false)
+      test: false,
+
+      // Optional: Logger for debugging (default: null)
+      logger: console,
+    });
+    console.log('verifyReceiptResponse', verifyReceiptResponse);
+  } catch (error) {
+    const iapAppleError = error as IAPAppleError;
+    console.error('Error:', iapAppleError.rejectionMessage);
+    console.error('Details:', iapAppleError.data);
+  }
 }
 ```
 
-### isVerifiedReceipt 🧪
+### isVerifiedReceipt
 
-API used to verify if response returned by `verify` is verified.
-Requires the output of `verify` to be passed.
-See example for more details.
+Checks if the response from `verify` indicates a successful validation.
 
 ```typescript
-
 import { verify, isVerifiedReceipt, IIAPAppleConfig } from 'iap-apple';
 
-async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) {
-    try {
-        const verifyReceiptResponse = await verify(receipt, config);
-        const isVerifiedReceipt = isVerifiedReceipt(verifyReceiptResponse);
-    } catch(error) {
-        const iapAppleError = error as IAPAppleError;
-        const rejectionMessage: string = error.rejectionMessage;
-        const errorData: IVerifyReceiptResponseBody | null = error.data;
-        console.error('Error happened', rejectionMessage);
-        console.error('Details', errorData);
+async function checkReceipt(receipt: string, config: IIAPAppleConfig) {
+  try {
+    const response = await verify(receipt, config);
+    if (isVerifiedReceipt(response)) {
+      console.log('Receipt is valid');
     }
+  } catch (error) {
+    console.error('Validation failed:', (error as IAPAppleError).rejectionMessage);
+  }
 }
 ```
 
-### getPurchasedItems 🧪
+### getPurchasedItems
 
-API used to get an array of PurchasedItem objects from the Apple App Store response,
-sort by their purchase date descending.
-Usually what we are interested in is the first item of the purchase.
-Requires the output of `verify` to be passed.
-See example for more details.
+Extracts purchased items from the validated receipt, sorted by purchase date (newest first), deduplicated by `original_transaction_id`.
 
 ```typescript
-
 import { verify, getPurchasedItems, IIAPAppleConfig } from 'iap-apple';
 
-async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) {
-    try {
-        const verifyReceiptResponse = await verify(receipt, config);
-        const purchasedItems = getPurchasedItems(verifyReceiptResponse);
-        const latestPurchase = purchasedItems[0];
-    } catch(error) {
-        const iapAppleError = error as IAPAppleError;
-        const rejectionMessage: string = error.rejectionMessage;
-        const errorData: IVerifyReceiptResponseBody | null = error.data;
-        console.error('Error happened', rejectionMessage);
-        console.error('Details', errorData);
-    }
+async function getLatestPurchase(receipt: string, config: IIAPAppleConfig) {
+  try {
+    const response = await verify(receipt, config);
+    const purchasedItems = getPurchasedItems(response);
+    const latestPurchase = purchasedItems[0];
+    console.log('Latest purchase:', latestPurchase);
+  } catch (error) {
+    console.error('Error:', (error as IAPAppleError).rejectionMessage);
+  }
 }
 ```
 
-### isPurchasedItemCanceled 🧪
+### isPurchasedItemCanceled
 
-API used to check if a purchased item is canceled.
-Requires the output of `getPurchasedItems` to be passed.
-See example for more details.
+Checks if a purchased item has been canceled.
 
 ```typescript
-
 import { verify, getPurchasedItems, isPurchasedItemCanceled, IIAPAppleConfig } from 'iap-apple';
 
-async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) {
-    try {
-        const verifyReceiptResponse = await verify(receipt, config);
-        const purchasedItems = getPurchasedItems(verifyReceiptResponse);
-        const latestPurchase = purchasedItems[0];
-        const isCanceled = isPurchasedItemCanceled(latestPurchase);
-    } catch(error) {
-        const iapAppleError = error as IAPAppleError;
-        const rejectionMessage: string = error.rejectionMessage;
-        const errorData: IVerifyReceiptResponseBody | null = error.data;
-        console.error('Error happened', rejectionMessage);
-        console.error('Details', errorData);
+async function checkCancellation(receipt: string, config: IIAPAppleConfig) {
+  try {
+    const response = await verify(receipt, config);
+    const purchasedItems = getPurchasedItems(response);
+    const latestPurchase = purchasedItems[0];
+    if (isPurchasedItemCanceled(latestPurchase)) {
+      console.log('Purchase was canceled');
     }
+  } catch (error) {
+    console.error('Error:', (error as IAPAppleError).rejectionMessage);
+  }
 }
 ```
 
+### isPurchasedItemExpired
 
-### isPurchasedItemExpired 🧪
-
-API used to check if a purchased item is expired.
-Requires the output of `getPurchasedItems` to be passed.
-See example for more details.
+Checks if a purchased item has expired (canceled or past expiration date).
 
 ```typescript
-
 import { verify, getPurchasedItems, isPurchasedItemExpired, IIAPAppleConfig } from 'iap-apple';
 
-async function isVerifiedAppleReceipt(receipt: string, config: IIAPAppleConfig) {
-    try {
-        const verifyReceiptResponse = await verify(receipt, config);
-        const purchasedItems = getPurchasedItems(verifyReceiptResponse);
-        const latestPurchase = purchasedItems[0];
-        const isExpired = isPurchasedItemExpired(latestPurchase);
-    } catch(error) {
-        const iapAppleError = error as IAPAppleError;
-        const rejectionMessage: string = error.rejectionMessage;
-        const errorData: IVerifyReceiptResponseBody | null = error.data;
-        console.error('Error happened', rejectionMessage);
-        console.error('Details', errorData);
+async function checkExpiration(receipt: string, config: IIAPAppleConfig) {
+  try {
+    const response = await verify(receipt, config);
+    const purchasedItems = getPurchasedItems(response);
+    const latestPurchase = purchasedItems[0];
+    if (isPurchasedItemExpired(latestPurchase)) {
+      console.log('Purchase has expired');
     }
+  } catch (error) {
+    console.error('Error:', (error as IAPAppleError).rejectionMessage);
+  }
 }
 ```
+
+## Types
+
+### PurchasedItem
+
+```typescript
+interface PurchasedItem {
+  bundleId: string;
+  appItemId: string;
+  originalTransactionId?: string;
+  transactionId: string;
+  productId: string;
+  originalPurchaseDateMS?: number;
+  expirationDateMS?: number;
+  purchaseDateMS: number;
+  isTrialPeriod: boolean;
+  cancellationDateMS?: number;
+  quantity: number;
+}
+```
+
+### IIAPAppleConfig
+
+```typescript
+interface IIAPAppleConfig {
+  appSharedSecret: string;
+  appleExcludeOldTransactions?: boolean;
+  test?: boolean;
+  logger?: ILogger | null;
+}
+```
+
+## License
+
+ISC
