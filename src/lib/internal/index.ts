@@ -92,7 +92,11 @@ export const verifyReceipt = async function ({
         data.status !== RECEIPT_STATUS_ENUM.TEST_ENV_RECEIPT_DETECTED &&
         data.status !== RECEIPT_STATUS_ENUM.DATA_MALFORMED
       ) {
-        // Status 21006 is used for both expired and cancelled subscriptions
+        /*
+          Status 21006 is returned for both expired and cancelled subscriptions.
+          If the subscription hasn't actually expired yet, it means it was cancelled
+          but is still valid until the expiration date - treat this as success.
+        */
         if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isSubscriptionExpired(data)) {
           logger?.log(prefixMessage('Valid receipt, but has been cancelled (not expired yet)'));
           resolve({

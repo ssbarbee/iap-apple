@@ -50,6 +50,11 @@ export async function verify(receipt: string, config: IIAPAppleConfig): Promise<
 
     if (verifyReceiptResponse.status === RECEIPT_STATUS_ENUM.SUCCESS) {
       if (verifyReceiptResponse.receipt?.in_app && verifyReceiptResponse.receipt?.in_app?.length === 0) {
+        /*
+          Detected valid receipt, but the receipt bought nothing.
+          Possibly hacked: https://forums.developer.apple.com/thread/8954
+          https://developer.apple.com/library/mac/technotes/tn2413/_index.html#//apple_ref/doc/uid/DTS40016228-CH1-RECEIPT-HOW_DO_I_USE_THE_CANCELLATION_DATE_FIELD_
+        */
         reject({
           rejectionMessage: 'Detected valid receipt, however purchase list is empty',
           data: verifyReceiptResponse,
@@ -133,6 +138,10 @@ export const getPurchasedItems = function (verifyReceiptResponse: IVerifyReceipt
     purchases = purchases.concat(lri);
   }
 
+  /*
+    Sort purchases by purchase_date_ms DESC to ensure we keep the most recent
+    transaction when deduplicating by original_transaction_id.
+  */
   purchases.sort((a, b) => parseInt(b.purchase_date_ms, 10) - parseInt(a.purchase_date_ms, 10));
 
   const transactionIds: Record<string, boolean> = {};
