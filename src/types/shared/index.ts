@@ -1,5 +1,8 @@
-import { IReceiptInAppItem } from '../internal';
 import { RECEIPT_STATUS_ENUM } from '../../constants';
+import { IPendingRenewalInfo, IReceiptInAppItem } from '../internal';
+
+// Re-export internal types that are part of the public API
+export type { IPendingRenewalInfo, IReceiptInAppItem } from '../internal';
 
 export interface ILogger {
   log: (message: string) => void;
@@ -95,7 +98,13 @@ export interface IVerifyReceiptResponseBody {
     A value of 1 indicates a temporary issue; retry validation for this receipt at a later time.
     A value of 0 indicates an unresolvable issue; do not retry validation for this receipt. Only applicable to status codes 21100-21199.
   */
-  'is-retryable': boolean;
+  'is-retryable'?: boolean;
+  /*
+    An array of elements that refers to open or failed auto-renewable subscription renewals.
+    Each element contains the product identifier, original transaction identifier, and renewal status for the subscription.
+    Only returned for receipts that contain auto-renewable subscriptions.
+  */
+  pending_renewal_info?: IPendingRenewalInfo[];
 }
 
 /*

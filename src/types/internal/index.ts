@@ -1,4 +1,74 @@
 /*
+    https://developer.apple.com/documentation/appstorereceipts/responsebody/pending_renewal_info
+ */
+export interface IPendingRenewalInfo {
+  /*
+        Auto Renew Product ID
+        The current renewal preference for the auto-renewable subscription.
+        The value for this key corresponds to the productIdentifier property of the product that the customer's subscription renews.
+     */
+  auto_renew_product_id: string;
+  /*
+        Auto Renew Status
+        The current renewal status for the auto-renewable subscription.
+        "1" - The subscription will renew at the end of the current subscription period.
+        "0" - The customer has turned off automatic renewal for the subscription.
+     */
+  auto_renew_status: '0' | '1';
+  /*
+        Original Transaction ID
+        The transaction identifier of the original purchase.
+     */
+  original_transaction_id: string;
+  /*
+        Product ID
+        The product identifier of the product that will renew at the end of the current subscription period.
+     */
+  product_id: string;
+  /*
+        Expiration Intent
+        The reason a subscription expired.
+        "1" - Customer canceled their subscription.
+        "2" - Billing error; for example, the customer's payment information was no longer valid.
+        "3" - Customer did not agree to a recent price increase.
+        "4" - Product was not available for purchase at the time of renewal.
+        "5" - Unknown error.
+     */
+  expiration_intent?: '1' | '2' | '3' | '4' | '5';
+  /*
+        Grace Period Expires Date
+        The time at which the grace period for subscription renewals expires, in UNIX epoch time format, in milliseconds.
+        This key is only present for apps that have Billing Grace Period enabled and when the user experiences a billing error at the time of renewal.
+     */
+  grace_period_expires_date_ms?: string;
+  /*
+        Is In Billing Retry Period
+        A flag that indicates Apple is attempting to renew an expired subscription automatically.
+        "1" - The App Store is attempting to renew the subscription.
+        "0" - The App Store has stopped attempting to renew the subscription.
+     */
+  is_in_billing_retry_period?: '0' | '1';
+  /*
+        Offer Code Reference Name
+        The reference name of a subscription offer that you configured in App Store Connect.
+        This field is present when a customer redeemed a subscription offer code.
+     */
+  offer_code_ref_name?: string;
+  /*
+        Price Consent Status
+        The price consent status for a subscription price increase.
+        "1" - Customer has agreed to the price increase.
+        "0" - Customer has not yet responded to the price increase.
+     */
+  price_consent_status?: '0' | '1';
+  /*
+        Promotional Offer ID
+        The identifier of the promotional offer for an auto-renewable subscription that the user redeemed.
+     */
+  promotional_offer_id?: string;
+}
+
+/*
     https://developer.apple.com/documentation/appstorereceipts/responsebody/receipt/in_app
  */
 export interface IReceiptInAppItem {
@@ -104,4 +174,35 @@ export interface IReceiptInAppItem {
         A string that the App Store uses to uniquely identify the application that created the transaction.
      */
   app_item_id: string;
+  /*
+        Web Order Line Item ID
+        A unique identifier for purchase events across devices, including subscription-renewal events.
+        This value is the primary key for identifying subscription purchases.
+     */
+  web_order_line_item_id?: string;
+  /*
+        Introductory Price Period
+        For an auto-renewable subscription, whether or not it is in the introductory price period.
+        This key is only present for auto-renewable subscription receipts.
+        The value for this key is "true" if the customer's subscription is currently in an introductory price period, or "false" if not.
+     */
+  is_in_intro_offer_period?: string;
+  /*
+        Promotional Offer ID
+        The identifier of the promotional offer for an auto-renewable subscription that the user redeemed.
+        This field is present only if the user redeemed a promotional offer.
+     */
+  promotional_offer_id?: string;
+  /*
+        Offer Code Reference Name
+        The reference name of the offer code that the user redeemed.
+        Present only if the user redeemed an offer code.
+     */
+  offer_code_ref_name?: string;
+  /*
+        In-App Ownership Type
+        The relationship of the user with the family-shared purchase to which they have access.
+        Possible values: FAMILY_SHARED, PURCHASED
+     */
+  in_app_ownership_type?: 'FAMILY_SHARED' | 'PURCHASED';
 }
