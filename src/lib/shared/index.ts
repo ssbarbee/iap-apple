@@ -3,11 +3,13 @@ import { getPurchaseItem, verifyReceipt } from '../internal';
 import { PROD_PATH, RECEIPT_STATUS_ENUM, SANDBOX_PATH, STATUS_TO_MESSAGE_MAP } from '../../constants';
 
 /**
- * It takes a receipt data and a config object, and returns a promise that resolves to a validated receipt object or
- * rejects with an error
- * @param {string} receipt - The receipt data.
- * @param {IIAPAppleConfig} config - IIAPAppleConfig
- * @returns a promise.
+ * Validates an Apple App Store receipt against Apple's verifyReceipt endpoint.
+ * Attempts production endpoint first, falls back to sandbox if needed.
+ *
+ * @param receipt - Base64-encoded receipt data from the App Store
+ * @param config - Configuration including shared secret and optional settings
+ * @returns Validated receipt response from Apple
+ * @throws {IAPAppleError} When validation fails or receipt is invalid
  */
 export async function verify(receipt: string, config: IIAPAppleConfig): Promise<IVerifyReceiptResponseBody> {
   const { appleExcludeOldTransactions, logger, test, appSharedSecret } = config;
@@ -48,23 +50,15 @@ export async function verify(receipt: string, config: IIAPAppleConfig): Promise<
 
     if (verifyReceiptResponse.status === RECEIPT_STATUS_ENUM.SUCCESS) {
       if (verifyReceiptResponse.receipt?.in_app && verifyReceiptResponse.receipt?.in_app?.length === 0) {
-        /*
-          Detected valid receipt,
-          but the receipt bought nothing
-          probably hacked: https://forums.developer.apple.com/thread/8954
-          https://developer.apple.com/library/mac/technotes/tn2413/_index.html#//apple_ref/doc/uid/DTS40016228-CH1-RECEIPT-HOW_DO_I_USE_THE_CANCELLATION_DATE_FIELD_
-        */
         reject({
           rejectionMessage: 'Detected valid receipt, however purchase list is empty',
           data: verifyReceiptResponse,
         });
       }
-      // validated successfully
       resolve(verifyReceiptResponse);
       return;
     }
 
-    // failed to validate reject with apple message
     reject({
       rejectionMessage: STATUS_TO_MESSAGE_MAP[verifyReceiptResponse.status],
       data: verifyReceiptResponse,
@@ -73,46 +67,44 @@ export async function verify(receipt: string, config: IIAPAppleConfig): Promise<
 }
 
 /**
- * It checks if the receipt is valid.
- * @param {IVerifyReceiptResponseBody | null} verifyReceiptResponse - IVerifyReceiptResponseBody | null
- * @returns A boolean
+ * Checks whether the receipt validation was successful.
+ *
+ * @param verifyReceiptResponse - Response from Apple's verifyReceipt endpoint
+ * @returns True if the receipt status indicates success
  */
 export const isVerifiedReceipt = function (verifyReceiptResponse: IVerifyReceiptResponseBody | null): boolean {
   return verifyReceiptResponse?.status === RECEIPT_STATUS_ENUM.SUCCESS;
 };
 
 /**
- * If the purchased item has been cancelled or if the expiration date has passed, then it has expired
- * @param {PurchasedItem | null} purchasedItem - PurchasedItem | null
- * @returns A boolean
+ * Determines if a purchased item has expired (cancelled or past expiration date).
+ *
+ * @param purchasedItem - The purchased item to check
+ * @returns True if the item has been cancelled or its expiration date has passed
+ * @throws {Error} If purchasedItem is invalid or missing transactionId
  */
 export const isPurchasedItemExpired = function (purchasedItem: PurchasedItem | null): boolean {
   if (!purchasedItem?.transactionId) {
     throw new Error('Detected invalid purchased item! Make sure object is defined and it has transaction id.');
   }
 
-  // it has been cancelled
   if (purchasedItem.cancellationDateMS) {
     return true;
   }
 
-  // there is no expiration date with this item
   if (!purchasedItem.expirationDateMS) {
     return false;
   }
-  // has expired
-  if (Date.now().valueOf() - purchasedItem.expirationDateMS >= 0) {
-    return true;
-  }
-  // has not expired yet
-  return false;
+
+  return Date.now().valueOf() - purchasedItem.expirationDateMS >= 0;
 };
 
 /**
- * If the purchased item has a cancellation date, then it's canceled.
- * @param {PurchasedItem} purchasedItem - PurchasedItem - this is the purchased item object that you get from the
- * getPurchasedItems() method.
- * @returns A boolean value.
+ * Checks if a purchased item has been cancelled.
+ *
+ * @param purchasedItem - The purchased item to check
+ * @returns True if the item has a cancellation date
+ * @throws {Error} If purchasedItem is invalid or missing transactionId
  */
 export const isPurchasedItemCanceled = function (purchasedItem: PurchasedItem): boolean {
   if (!purchasedItem?.transactionId) {
@@ -122,10 +114,12 @@ export const isPurchasedItemCanceled = function (purchasedItem: PurchasedItem): 
 };
 
 /**
- * It takes a response from the Apple App Store and returns an array of PurchasedItem objects sorted by their purchase date in descending order,
- * the latest purchase comes first.
- * @param {IVerifyReceiptResponseBody | null} verifyReceiptResponse - IVerifyReceiptResponseBody | null
- * @returns An array of PurchasedItem objects.
+ * Extracts purchased items from a validated receipt response.
+ * Combines in_app and latest_receipt_info, deduplicates by original_transaction_id,
+ * and returns items sorted by purchase date (newest first).
+ *
+ * @param verifyReceiptResponse - Response from Apple's verifyReceipt endpoint
+ * @returns Array of purchased items, deduplicated and sorted by purchase date descending
  */
 export const getPurchasedItems = function (verifyReceiptResponse: IVerifyReceiptResponseBody | null): PurchasedItem[] {
   if (!verifyReceiptResponse?.receipt) {
@@ -138,20 +132,13 @@ export const getPurchasedItems = function (verifyReceiptResponse: IVerifyReceipt
   if (Array.isArray(lri)) {
     purchases = purchases.concat(lri);
   }
-  /*
-    we sort purchases by purchase_date_ms to make it easier
-    to weed out duplicates (items with the same original_transaction_id)
-    purchase_date_ms DESC
-  */
-  purchases.sort(function (a, b) {
-    return parseInt(b.purchase_date_ms, 10) - parseInt(a.purchase_date_ms, 10);
-  });
+
+  purchases.sort((a, b) => parseInt(b.purchase_date_ms, 10) - parseInt(a.purchase_date_ms, 10));
 
   const transactionIds: Record<string, boolean> = {};
   for (let i = 0; i < purchases.length; i++) {
     const item = purchases[i];
     const tid = item.original_transaction_id;
-    // avoid duplicate
     if (transactionIds[tid]) {
       continue;
     }
