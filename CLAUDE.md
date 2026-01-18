@@ -36,6 +36,12 @@ pnpm prettier:fix
 pnpm code-quality:check
 ```
 
+## Build System
+
+- Uses `tsup` for bundling (outputs both CJS and ESM)
+- Build output goes to `dist/` with `index.js` (CJS), `index.mjs` (ESM), and type declarations
+- Target: Node.js 22+, ES2023
+
 ## Architecture
 
 ### Directory Structure

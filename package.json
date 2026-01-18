@@ -2,10 +2,26 @@
   "name": "iap-apple",
   "version": "2.0.5",
   "description": "Integration with Apples InAppPurchases in Typescript, available for NodeJS environments.",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && cp package.json dist/package.json && cp README.md dist/README.md && cp CHANGELOG.md dist/CHANGELOG.md && cp LICENSE dist/LICENSE",
+    "build": "tsup",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "nyc --reporter=json-summary mocha --bail --slow 1 --timeout 60000 --require ts-node/register/transpile-only src/**/*.spec.ts",
     "prepare": "is-ci || husky",
@@ -17,7 +33,6 @@
     "prettier:check": "prettier --check 'src/**/*.{ts,tsx}'",
     "prettier:fix": "prettier --write 'src/**/*.{ts,tsx}'",
     "release": "semantic-release",
-    "postversion": "cp -r package.json ..",
     "code-quality:check": "concurrently 'pnpm ts:check' 'pnpm prettier:check' 'pnpm lint:check --quiet'",
     "generate:coverage-badges": "istanbul-badges-readme --silent"
   },
@@ -72,13 +87,14 @@
     "semantic-release": "24.2.1",
     "semantic-release-cli": "5.4.6",
     "ts-node": "10.9.2",
+    "tsup": "^8.5.1",
     "typescript": "5.7.2"
   },
   "dependencies": {
     "superagent": "10.1.1"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=22.0.0",
     "pnpm": ">= 9"
   },
   "release": {
@@ -148,12 +164,7 @@
           }
         }
       ],
-      [
-        "@semantic-release/npm",
-        {
-          "pkgRoot": "./dist"
-        }
-      ],
+      "@semantic-release/npm",
       "@semantic-release/release-notes-generator",
       "@semantic-release/changelog",
       [
@@ -161,9 +172,7 @@
         {
           "assets": [
             "package.json",
-            "README.md",
-            "CHANGELOG.md",
-            "dist/**/*.{js}"
+            "CHANGELOG.md"
           ],
           "message": "chore: Release ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
         }
