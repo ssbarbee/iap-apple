@@ -1,3 +1,27 @@
+# [3.0.0](https://github.com/ssbarbee/iap-apple/compare/v2.0.5...v3.0.0) (2026-01-18)
+
+
+### breaking
+
+* modernize build system and require Node.js 22+ ([45d231f](https://github.com/ssbarbee/iap-apple/commit/45d231f7073cec68cfaca492608b4669f178d178))
+
+
+### Bug Fixes
+
+* add missing Apple API type definitions ([7d8ee91](https://github.com/ssbarbee/iap-apple/commit/7d8ee914e002a1b77117dcf2bbca44f5456cce08))
+
+
+### BREAKING CHANGES
+
+* This release requires Node.js 22.0.0 or higher.
+
+- Switch from tsc to tsup for building
+- Output both CJS (index.js) and ESM (index.mjs) formats
+- Add proper package.json exports field for modern resolution
+- Update TypeScript target to ES2023
+- Remove manual file copying in build process
+- Publish from root directory with files field instead of dist pkgRoot
+
 ## [2.0.5](https://github.com/ssbarbee/iap-apple/compare/v2.0.4...v2.0.5) (2023-03-16)
 
 
