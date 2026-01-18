@@ -33,7 +33,7 @@ importers:
         specifier: 10.0.10
         version: 10.0.10
       '@types/nock':
-        specifier: ^11.1.0
+        specifier: 11.1.0
         version: 11.1.0
       '@types/node':
         specifier: 22.10.5
@@ -84,7 +84,7 @@ importers:
         specifier: 10.8.2
         version: 10.8.2
       nock:
-        specifier: ^14.0.10
+        specifier: 14.0.10
         version: 14.0.10
       nyc:
         specifier: 17.1.0
@@ -102,7 +102,7 @@ importers:
         specifier: 10.9.2
         version: 10.9.2(@types/node@22.10.5)(typescript@5.7.2)
       tsup:
-        specifier: ^8.5.1
+        specifier: 8.5.1
         version: 8.5.1(jiti@2.6.1)(typescript@5.7.2)
       typescript:
         specifier: 5.7.2
