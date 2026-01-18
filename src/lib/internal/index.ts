@@ -1,22 +1,24 @@
 import { IAPAppleError, ILogger, IReceiptInAppItem, IVerifyReceiptResponseBody, PurchasedItem } from '../../types';
 import { RECEIPT_STATUS_ENUM, STATUS_TO_MESSAGE_MAP } from '../../constants';
-import * as request from 'superagent';
 
 function prefixMessage(message: string) {
   return `[iap-apple] ${message}`;
 }
 
-export function isExpiredReceipt(responseData: IVerifyReceiptResponseBody) {
-  const date = Math.max(
-    ...(responseData.latest_receipt_info || [])
-      .filter((lri) => lri.expires_date_ms)
-      .map((lri) => parseInt(lri.expires_date_ms!, 10)),
-  );
-  if (date) {
-    return date > Date.now().valueOf();
+/**
+ * Determines if all subscriptions in the receipt have expired based on expiration dates.
+ */
+export function isSubscriptionExpired(responseData: IVerifyReceiptResponseBody): boolean {
+  const expirationDates = (responseData.latest_receipt_info || [])
+    .filter((lri) => lri.expires_date_ms)
+    .map((lri) => parseInt(lri.expires_date_ms!, 10));
+
+  if (expirationDates.length === 0) {
+    return false;
   }
-  // old receipt
-  return false;
+
+  const latestExpirationDate = Math.max(...expirationDates);
+  return latestExpirationDate < Date.now();
 }
 
 async function verifyReceiptApple(
@@ -27,23 +29,19 @@ async function verifyReceiptApple(
     'exclude-old-transactions': boolean;
   },
 ): Promise<IVerifyReceiptResponseBody> {
-  return new Promise((resolve, reject) => {
-    try {
-      request
-        .post(url)
-        .set('Content-type', 'application/json')
-        .send(JSON.stringify(content))
-        .end((error, response) => {
-          if (error || response.status !== 200) {
-            reject(error);
-            return;
-          }
-          resolve(response.body);
-        });
-    } catch (err) {
-      reject(err);
-    }
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(content),
   });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error: ${response.status}`);
+  }
+
+  return (await response.json()) as IVerifyReceiptResponseBody;
 }
 
 export function getPurchaseItem(item: IReceiptInAppItem, purchase: IVerifyReceiptResponseBody): PurchasedItem {
@@ -88,20 +86,15 @@ export const verifyReceipt = async function ({
     try {
       const data = await verifyReceiptApple(validationEndpoint, content);
       logger?.log(prefixMessage(`Endpoint ${validationEndpoint} response: ${JSON.stringify(data, null, 2)}`));
-      // apple responded with error
+
       if (
         data.status !== RECEIPT_STATUS_ENUM.SUCCESS &&
         data.status !== RECEIPT_STATUS_ENUM.TEST_ENV_RECEIPT_DETECTED &&
         data.status !== RECEIPT_STATUS_ENUM.DATA_MALFORMED
       ) {
-        if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isExpiredReceipt(data)) {
-          /*
-            detected valid subscription receipt,
-            however it was cancelled, and it has not been expired
-            status code is 21006 for both expired receipt and cancelled receipt...
-          */
+        // Status 21006 is used for both expired and cancelled subscriptions
+        if (data.status === RECEIPT_STATUS_ENUM.SUBSCRIPTION_EXPIRED && !isSubscriptionExpired(data)) {
           logger?.log(prefixMessage('Valid receipt, but has been cancelled (not expired yet)'));
-          // force status to be SUCCESS
           resolve({
             ...data,
             status: RECEIPT_STATUS_ENUM.SUCCESS,
@@ -115,11 +108,12 @@ export const verifyReceipt = async function ({
         } as IAPAppleError);
         return;
       }
-      // try another environment...
+
       if (data.status === RECEIPT_STATUS_ENUM.TEST_ENV_RECEIPT_DETECTED) {
         resolve(null);
         return;
       }
+
       if (data.status === RECEIPT_STATUS_ENUM.DATA_MALFORMED) {
         reject({
           rejectionMessage: STATUS_TO_MESSAGE_MAP[data.status] || 'Unknown',
@@ -127,7 +121,7 @@ export const verifyReceipt = async function ({
         } as IAPAppleError);
         return;
       }
-      // receipt validated
+
       logger?.log(prefixMessage(`Validation successful: ${JSON.stringify(data, null, 2)}`));
       resolve(data);
     } catch (error) {
@@ -136,7 +130,6 @@ export const verifyReceipt = async function ({
         rejectionMessage: (error as Error)?.message,
         data: null,
       } as IAPAppleError);
-      reject(error);
     }
   });
 };
